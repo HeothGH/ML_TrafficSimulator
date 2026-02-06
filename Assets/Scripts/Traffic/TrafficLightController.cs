@@ -11,8 +11,7 @@ public class TrafficLightController : MonoBehaviour
         UpdateVisuals();
     }
 
-    // TA metoda jest interfejsem dla ML oraz dla ManualInput
-    public void SetState(int state) // 0 = Red, 1 = Green
+    public void SetState(int state)
     {
         IsGreen = (state == 1);
         UpdateVisuals();

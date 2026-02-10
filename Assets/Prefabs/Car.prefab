@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 307654775046839469}
   - component: {fileID: 1331401312368373833}
   - component: {fileID: 3012605332188686070}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Car
   m_TagString: Car
   m_Icon: {fileID: 0}
@@ -132,3 +132,7 @@ MonoBehaviour:
   deceleration: 10
   turnSpeed: 5
   arrivalDistance: 1
+  carLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  aggressionBias: 0

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class SimulationManager : MonoBehaviour
 {
@@ -72,6 +74,10 @@ public class SimulationManager : MonoBehaviour
         {
             Step();
             timer = 0;
+        }
+        if(Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 

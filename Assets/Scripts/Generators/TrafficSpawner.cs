@@ -16,6 +16,7 @@ public class TrafficSpawner : MonoBehaviour
     {
         public RoadSegment startRoad;
         public Queue<RoadSegment> path;
+        public float aggressionBias;
     }
 
     private Queue<PendingCarRequest> spawnQueue = new Queue<PendingCarRequest>();
@@ -65,10 +66,12 @@ public class TrafficSpawner : MonoBehaviour
 
             if (route != null && route.Count > 0)
             {
+                float randomBias = (float)rng.NextDouble() * 2.0f - 1.0f;
                 spawnQueue.Enqueue(new PendingCarRequest
                 {
                     startRoad = startRoad,
-                    path = route
+                    path = route,
+                    aggressionBias = randomBias
                 });
                 carsCreated++;
             }
@@ -85,7 +88,7 @@ public class TrafficSpawner : MonoBehaviour
         if (nextCar.startRoad.CanEnter())
         {
             CarAgent car = Instantiate(carPrefab, Vector3.zero, Quaternion.identity);
-            car.Initialize(nextCar.startRoad, nextCar.path);
+            car.Initialize(nextCar.startRoad, nextCar.path, nextCar.aggressionBias);
 
             activeCars.Add(car);
             spawnQueue.Dequeue();

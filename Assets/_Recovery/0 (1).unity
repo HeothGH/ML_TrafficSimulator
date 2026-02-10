@@ -200,8 +200,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   roadLength: 50
   intersectionSize: 15
-  width: 3
-  height: 3
+  width: 100
+  height: 100
   seed: 12345
   intersectionPrefab: {fileID: 7200534740244395347, guid: a093c41d0fe93654184c012ac1013c1f, type: 3}
   roadPrefab: {fileID: 3306793627952414292, guid: 3b99fdef544b67e4bb46fc181925efbd, type: 3}
@@ -575,7 +575,7 @@ Transform:
   m_GameObject: {fileID: 1101501433}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 13.1132, y: 0, z: 36.26793}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -613,7 +613,7 @@ MonoBehaviour:
   simulationManager: {fileID: 241227567}
   carPrefab: {fileID: 3012605332188686070, guid: dd9bed2187fd0d8438328add6787d8fd, type: 3}
   seed: 42
-  totalCarsInScenario: 30
+  totalCarsInScenario: 10000
 --- !u!4 &1406930175
 Transform:
   m_ObjectHideFlags: 0
@@ -623,7 +623,7 @@ Transform:
   m_GameObject: {fileID: 1406930173}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 2.06872, y: 0, z: 35.20174}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -670,7 +670,7 @@ Transform:
   m_GameObject: {fileID: 1922230899}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -13.76524, y: 0, z: 48.81718}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -701,7 +701,7 @@ Transform:
   m_GameObject: {fileID: 2118063118}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.05001, z: 0}
+  m_LocalPosition: {x: 2.99992, y: 0.05001, z: 6.58761}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

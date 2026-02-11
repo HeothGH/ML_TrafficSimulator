@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 7114656646053465730}
   - component: {fileID: 3014122973140681406}
   - component: {fileID: 7200534740244395347}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Intersection
-  m_TagString: Lane
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

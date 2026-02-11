@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class StatsManager : MonoBehaviour
@@ -8,6 +9,12 @@ public class StatsManager : MonoBehaviour
     public float totalTravelTime = 0f;
     public int carsFinished = 0;
     public int currentCarsOnMap = 0;
+
+    [Tooltip("Suma kar (Waiting Time * Multiplier) w obecnym kroku symulacji")]
+    public float currentStepPenalty = 0f;
+
+    [Tooltip("Suma kar od pocz¹tku epizodu")]
+    public float accumulatedEpisodePenalty = 0f;
 
     void Awake()
     {
@@ -29,8 +36,21 @@ public class StatsManager : MonoBehaviour
         currentCarsOnMap--;
         carsFinished++;
         totalTravelTime += travelTime;
+    }
 
-        Debug.Log($"Auto ukonczylo trase w: {travelTime:F2}s. Total Score: {totalTravelTime}");
+    // Wywo³ywane przez SimulationManager w ka¿dym Step()
+    public void CalculateStepPenalty(List<RoadSegment> allRoads, float dt)
+    {
+        float stepSum = 0f;
+        foreach (var road in allRoads)
+        {
+            stepSum += road.GetCalculatedPenalty(dt);
+        }
+
+        currentStepPenalty = stepSum;
+        accumulatedEpisodePenalty += stepSum;
+
+        // W logach ML-Agents tutaj wyœlesz AddReward(-currentStepPenalty);
     }
 
     public void ResetMetrics()
@@ -38,5 +58,7 @@ public class StatsManager : MonoBehaviour
         totalTravelTime = 0f;
         carsFinished = 0;
         currentCarsOnMap = 0;
+        currentStepPenalty = 0f;
+        accumulatedEpisodePenalty = 0f;
     }
 }

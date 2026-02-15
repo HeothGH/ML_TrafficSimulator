@@ -195,7 +195,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tickRate: 0.5
-  simulationSeed: 11111
+  simulationSeed: 127
   carPrefab: {fileID: 2331321266964353592, guid: dd9bed2187fd0d8438328add6787d8fd, type: 3}
   allRoads: []
   mapGenerator: {fileID: 304471552}
@@ -414,12 +414,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 330585543}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 65940029dad215c449196d93c3f52c42, type: 3}
+  m_Script: {fileID: 11500000, guid: 753539fad91037c4ca4ef412434351f4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 5
-  fastMultiplier: 2
-  mouseSensitivity: 2
+  m_EditorClassIdentifier: '::'
+  moveSpeed: 20
+  sprintMultiplier: 2
+  scrollSensitivity: 1000
+  minHeight: 5
+  maxHeight: 250
+  carLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  ringRadius: 2
+  lineWidth: 0.5
+  ringColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -767,5 +775,5 @@ SceneRoots:
   - {fileID: 1922230901}
   - {fileID: 304471553}
   - {fileID: 1406930175}
-  - {fileID: 2118063119}
   - {fileID: 8928172}
+  - {fileID: 2118063119}

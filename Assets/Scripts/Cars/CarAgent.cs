@@ -43,6 +43,7 @@ public class CarAgent : MonoBehaviour
     private float currentSpeed = 0f;
     private float spawnTime;
 
+    public int PendingWaypointsCount => waypoints.Count;
     void Awake()
     {
         // Zapamiêtujemy wartoœci ustawione w Inspectorze jako bazowe

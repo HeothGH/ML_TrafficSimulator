@@ -129,7 +129,6 @@ public class RoadSegment : MonoBehaviour
         {
             CarAgent car = slots[i];
             if (car == null) continue;
-
             if (i == 0) // Pierwszy slot (przy skrzy¿owaniu)
             {
                 bool isGreen = (trafficLight == null || trafficLight.IsGreen);

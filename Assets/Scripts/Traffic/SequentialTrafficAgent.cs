@@ -17,7 +17,7 @@ public class SequentialTrafficAgent : MonoBehaviour
         // Jeœli nie przypisano generatora rêcznie, spróbuj znaleŸæ go na scenie
         if (mapGenerator == null)
         {
-            mapGenerator = FindObjectOfType<GridMapGenerator>();
+            mapGenerator = FindFirstObjectByType<GridMapGenerator>();
         }
     }
 

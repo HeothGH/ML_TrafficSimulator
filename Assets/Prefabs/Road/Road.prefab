@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 2273297426902390295}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: -3.75, y: -0.05, z: 0}
+  m_LocalPosition: {x: -1.875, y: -0.05, z: 0}
   m_LocalScale: {x: 3.75, y: 0.1, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -131,6 +131,7 @@ MonoBehaviour:
   trafficLight: {fileID: 3619861910129560661}
   capacity: 0
   slots: []
+  priority: 0
   connectedRoads: []
 --- !u!1 &3306793627952414292
 GameObject:
@@ -306,7 +307,7 @@ Transform:
   m_GameObject: {fileID: 5535222053979228849}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.05, z: 0}
+  m_LocalPosition: {x: 1.875, y: -0.05, z: 0}
   m_LocalScale: {x: 3.75, y: 0.1, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -408,6 +409,7 @@ MonoBehaviour:
   trafficLight: {fileID: 1330933292537044525}
   capacity: 0
   slots: []
+  priority: 0
   connectedRoads: []
 --- !u!1 &6567729233378096536
 GameObject:
@@ -536,6 +538,10 @@ PrefabInstance:
     - target: {fileID: 1764742795781746767, guid: 97b212a2944d71a48838c7612a2c9091, type: 3}
       propertyPath: m_Layer
       value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1764742795781746767, guid: 97b212a2944d71a48838c7612a2c9091, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9176631987870566064, guid: 97b212a2944d71a48838c7612a2c9091, type: 3}
       propertyPath: m_LocalScale.x

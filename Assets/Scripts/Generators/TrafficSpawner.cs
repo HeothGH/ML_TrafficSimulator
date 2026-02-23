@@ -84,7 +84,13 @@ public class TrafficSpawner : MonoBehaviour
         if (spawnQueue.Count == 0) return;
 
         PendingCarRequest nextCar = spawnQueue.Peek();
-
+        Vector3 spawnPos = nextCar.startRoad.GetWorldPositionOfSlot(nextCar.startRoad.capacity - 1);
+        if (Physics.CheckSphere(spawnPos, 2.5f, carPrefab.carLayer)) // Upewnij siê, ¿e masz dostêp do carLayer
+        {
+            // Fizycznie miejsce jest zajête! Nie spawnuj w tej klatce.
+            // Auto zostanie w kolejce (spawnQueue) i spróbuje w nastêpnej klatce.
+            return;
+        }
         if (nextCar.startRoad.CanEnter())
         {
             CarAgent car = Instantiate(carPrefab, Vector3.zero, Quaternion.identity);

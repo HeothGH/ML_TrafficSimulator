@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq; // Potrzebne do sortowania
+using UnityEditor;
 using UnityEngine;
 
 public class Intersection : MonoBehaviour
@@ -100,21 +101,34 @@ public class Intersection : MonoBehaviour
         List<Vector3> path = new List<Vector3>();
         path.Add(startPos);
 
-        int segments = 10;
-        Vector3 p0 = startPos;
-        Vector3 p1 = centerPoint.position;
-        Vector3 p2 = endPos;
+        // Obliczamy ró¿nicê pozycji
+        Vector3 diff = endPos - startPos;
 
-        for (int i = 1; i <= segments; i++)
+        bool isStraight = Mathf.Abs(diff.x) > Mathf.Abs(diff.z) * 2.0f ||
+                          Mathf.Abs(diff.z) > Mathf.Abs(diff.x) * 2.0f;
+
+        if (isStraight)
         {
-            float t = i / (float)segments;
-            // Bezier quadratic
-            Vector3 point =
-                (1 - t) * (1 - t) * p0 +
-                2 * (1 - t) * t * p1 +
-                t * t * p2;
-            path.Add(point);
+            path.Add(endPos);
         }
+        else
+        {
+            int segments = 10;
+            Vector3 p0 = startPos;
+            Vector3 p1 = centerPoint.position;
+            Vector3 p2 = endPos;
+
+            for (int i = 1; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                Vector3 point =
+                    (1 - t) * (1 - t) * p0 +
+                    2 * (1 - t) * t * p1 +
+                    t * t * p2;
+                path.Add(point);
+            }
+        }
+
         return path;
     }
 }

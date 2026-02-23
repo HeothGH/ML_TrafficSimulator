@@ -125,11 +125,32 @@ public class RoadSegment : MonoBehaviour
 
     public void Tick()
     {
+        // Iterujemy od 0 (koniec drogi) w górê, ¿eby przesuwaæ auta "do przodu"
         for (int i = 0; i < capacity; i++)
         {
             CarAgent car = slots[i];
+
+            // Jeœli slot jest pusty, idziemy dalej
             if (car == null) continue;
-            if (i == 0) // Pierwszy slot (przy skrzy¿owaniu)
+
+            // --- NOWOŒÆ: BRAMKA SYNCHRONIZACYJNA ---
+            // Sprawdzamy, gdzie fizycznie jest auto.
+            // Jeœli auto jest zbyt daleko od swojego OBECNEGO logicznego slotu (i),
+            // to znaczy, ¿e fizyka nie nad¹¿a. Wstrzymujemy logikê dla tego auta.
+            // Dziêki temu slot 'i' (oraz te za nim) pozostaj¹ zajête i nic na nie nie wjedzie.
+
+            Vector3 logicalPos = GetWorldPositionOfSlot(i);
+            float dist = Vector3.Distance(car.transform.position, logicalPos);
+
+            // Tolerancja np. 12 metry (nieco mniej ni¿ d³ugoœæ auta z odstêpem).
+            // Jeœli jesteœ dalej ni¿ 12m od swojego wirtualnego miejsca, to logicznie STÓJ.
+            if (dist > 4.0f)
+            {
+                continue;
+            }
+            // ----------------------------------------
+
+            if (i == 0) // Pierwszy slot (wyjazd ze skrzy¿owania)
             {
                 bool isGreen = (trafficLight == null || trafficLight.IsGreen);
 
@@ -141,6 +162,8 @@ public class RoadSegment : MonoBehaviour
                     {
                         Connection conn = connectedRoads.Find(c => c.targetRoad == nextRoad);
 
+                        // Tu te¿ wa¿na zmiana: nextRoad.CanEnter() sprawdzi ostatni slot tamtej drogi.
+                        // Jeœli tamto auto fizycznie jeszcze nie odjecha³o, CanEnter zwróci false.
                         if (conn.targetRoad != null && nextRoad.CanEnter())
                         {
                             Vector3 startPos = GetWorldPositionOfSlot(0);
@@ -153,12 +176,13 @@ public class RoadSegment : MonoBehaviour
                             }
                             else
                             {
-                                pathPoints.Add(startPos);
-                                pathPoints.Add(endPos);
+                                pathPoints.Add(endPos); // Jazda prosto (usuniêty œrodek skrzy¿owania)
                             }
 
                             car.AddWaypoints(pathPoints);
-                            car.AddWaypoint(endPos);
+
+                            // Tutaj ju¿ nie musimy dodawaæ endPos jako osobnego waypointa, 
+                            // bo logika nextRoad zaraz przejmie auto i nada mu cel na slot.
 
                             slots[i] = null;
                             nextRoad.EnterRoad(car);
@@ -173,13 +197,20 @@ public class RoadSegment : MonoBehaviour
                     }
                 }
             }
-            else // Kolejne sloty
+            else // Kolejne sloty (jazda po prostej)
             {
+                // Sprawdzamy czy miejsce przed nami jest wolne
                 if (slots[i - 1] == null)
                 {
+                    // PRZESUNIÊCIE LOGICZNE
                     slots[i - 1] = car;
                     slots[i] = null;
+
                     car.currentSlotIndex = i - 1;
+
+                    // WIZUALIZACJA
+                    // Poniewa¿ auto "zaliczy³o" bramkê (jest blisko slotu i),
+                    // mo¿emy mu teraz bezpiecznie kazaæ jechaæ do slotu i-1.
                     Vector3 nextSlotPos = GetWorldPositionOfSlot(i - 1);
                     car.AddWaypoint(nextSlotPos);
                 }
@@ -213,5 +244,47 @@ public class RoadSegment : MonoBehaviour
                 Gizmos.DrawWireSphere(start - transform.forward * (i * step + step * 0.5f), 0.5f);
             }
         }
+    }
+    public void RemoveTrafficLight()
+    {
+        if (trafficLight != null)
+        {
+            if (Application.isPlaying) Destroy(trafficLight.gameObject);
+            else DestroyImmediate(trafficLight.gameObject);
+
+            // Czyœcimy referencjê - dziêki temu w Tick() zadzia³a warunek:
+            // bool isGreen = (trafficLight == null || trafficLight.IsGreen);
+            trafficLight = null;
+        }
+    }
+    void OnGUI()
+    {
+#if UNITY_EDITOR
+        if (UnityEditor.Selection.activeGameObject == this.gameObject)
+        {
+            // Podnosimy etykietê trochê wy¿ej nad drogê
+            Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 3f);
+
+            if (screenPos.z > 0)
+            {
+                GUI.color = Color.black;
+                GUIStyle style = new GUIStyle(GUI.skin.label);
+                style.normal.textColor = Color.yellow;
+                style.fontSize = 14;
+                style.fontStyle = FontStyle.Bold;
+
+                string debugText = $"--- ROAD DEBUG: {name} ---\nCapacity: {capacity}\n";
+
+                // Wypisujemy zawartoœæ ca³ej drogi
+                for (int i = 0; i < capacity; i++)
+                {
+                    string carName = slots[i] != null ? slots[i].name : "EMPTY";
+                    debugText += $"Slot [{i}]: {carName}\n";
+                }
+
+                GUI.Label(new Rect(screenPos.x - 75, Screen.height - screenPos.y, 300, 400), debugText, style);
+            }
+        }
+#endif
     }
 }

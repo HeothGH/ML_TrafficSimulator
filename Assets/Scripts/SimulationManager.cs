@@ -6,7 +6,8 @@ using UnityEngine.SceneManagement;
 public class SimulationManager : MonoBehaviour
 {
     [Header("Config")]
-    public float tickRate = 0.1f; // Zmniejszy³em domyœlnie dla p³ynniejszego debugowania
+    [Tooltip("Co ile klatek fizycznych ma siê wykonywaæ logika symulacji? Np. 5 oznacza co 0.1s (przy fixedTime 0.02)")]
+    public int logicFrameInterval = 5;
     public int simulationSeed = 12345;
 
     [Header("References")]
@@ -14,10 +15,20 @@ public class SimulationManager : MonoBehaviour
     public List<RoadSegment> allRoads = new List<RoadSegment>();
     public GridMapGenerator mapGenerator;
 
-    private float timer;
+    // Licznik klatek fizycznych
+    private int fixedFrameCount = 0;
+
+    // Obliczona sta³a delta czasu dla logiki
+    private float logicDeltaTime;
 
     void Awake()
     {
+        // 1. Obliczamy sztywny czas trwania jednego kroku logicznego
+        // Jeœli FixedUpdate jest co 0.02s, a interwa³ to 5, to logicDeltaTime = 0.1s
+        logicDeltaTime = logicFrameInterval * Time.fixedDeltaTime;
+
+        Debug.Log($"[SimManager] Logika dzia³a co {logicDeltaTime.ToString("F1")}s ({logicFrameInterval} klatek fizyki).");
+
         if (mapGenerator != null)
         {
             mapGenerator.seed = simulationSeed;
@@ -30,16 +41,21 @@ public class SimulationManager : MonoBehaviour
         }
     }
 
+    void FixedUpdate()
+    {
+        fixedFrameCount++;
+
+        // Wykonaj logikê tylko w co N-tej klatce fizyki
+        if (fixedFrameCount % logicFrameInterval == 0)
+        {
+            // Przekazujemy STA£¥ wartoœæ czasu.
+            // Dziêki temu Twoje obliczenia kar w StatsManager s¹ idealnie stabilne.
+            Step(logicDeltaTime);
+        }
+    }
+
     void Update()
     {
-        // Tryb ci¹g³y (dla testów wizualnych)
-        timer += Time.deltaTime;
-        if (timer >= tickRate)
-        {
-            Step(tickRate); // Przekazujemy deltê
-            timer = 0;
-        }
-
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);

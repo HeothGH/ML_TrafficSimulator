@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   mapGenerator: {fileID: 304471552}
-  switchInterval: 1
+  switchInterval: 0.01
 --- !u!4 &8928172
 Transform:
   m_ObjectHideFlags: 0
@@ -194,7 +194,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f0a0f0ca09b6f2428403606a952d0ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tickRate: 0.5
+  logicFrameInterval: 5
   simulationSeed: 127
   carPrefab: {fileID: 2331321266964353592, guid: dd9bed2187fd0d8438328add6787d8fd, type: 3}
   allRoads: []
@@ -243,11 +243,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9caa8d7063e0f9f41b0d67e31fbdfa12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  generationMode: 1
+  width: 10
+  height: 10
+  seed: 1
   roadLength: 50
   intersectionSize: 15
-  width: 5
-  height: 5
-  seed: 1
+  secondaryRoadProbability: 0.3
+  fillGapsProbability: 0.5
   snakeInertia: 0.7
   intersectionPrefab: {fileID: 7200534740244395347, guid: a093c41d0fe93654184c012ac1013c1f, type: 3}
   roadPrefab: {fileID: 3306793627952414292, guid: 3b99fdef544b67e4bb46fc181925efbd, type: 3}
@@ -604,37 +607,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1101501433
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1101501434}
-  m_Layer: 0
-  m_Name: Roads
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1101501434
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1101501433}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1406930173
 GameObject:
   m_ObjectHideFlags: 0
@@ -715,6 +687,7 @@ MonoBehaviour:
   totalTravelTime: 0
   carsFinished: 0
   currentCarsOnMap: 0
+  carsDestroyedBeforeFinish: 0
   currentStepPenalty: 0
   accumulatedEpisodePenalty: 0
 --- !u!4 &1922230901
@@ -770,7 +743,6 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 1101501434}
   - {fileID: 241227568}
   - {fileID: 1922230901}
   - {fileID: 304471553}

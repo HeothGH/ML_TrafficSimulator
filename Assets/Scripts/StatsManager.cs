@@ -9,6 +9,7 @@ public class StatsManager : MonoBehaviour
     public float totalTravelTime = 0f;
     public int carsFinished = 0;
     public int currentCarsOnMap = 0;
+    public int carsDestroyedBeforeFinish = 0;
 
     [Tooltip("Suma kar (Waiting Time * Multiplier) w obecnym kroku symulacji")]
     public float currentStepPenalty = 0f;
@@ -29,6 +30,12 @@ public class StatsManager : MonoBehaviour
     public void RegisterCarSpawn()
     {
         currentCarsOnMap++;
+    }
+
+    public void RegisterCarWronglyDestroyed()
+    {
+        carsDestroyedBeforeFinish++;
+        currentCarsOnMap--;
     }
 
     public void RegisterCarFinish(float travelTime)

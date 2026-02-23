@@ -126,10 +126,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentRoad: {fileID: 0}
+  roadSegment: {fileID: 0}
   currentSlotIndex: 0
   maxSpeed: 15
   acceleration: 5
-  deceleration: 10
+  deceleration: 15
   turnSpeed: 5
   arrivalDistance: 1
   carLayer:

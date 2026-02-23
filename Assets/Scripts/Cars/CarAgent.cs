@@ -151,15 +151,34 @@ public class CarAgent : MonoBehaviour
         if (hasTarget)
         {
             Vector3 sensorStart = transform.position + transform.forward * 1.0f + Vector3.up * 0.5f;
+
+            // --- NOWA LOGIKA: Celowanie Raycastem w logiczny slot ---
+            Vector3 rayDirection = transform.forward; // Wartoœæ domyœlna
+
+            // Upewniamy siê, ¿e mamy przypisan¹ drogê
+            if (roadSegment != null)
+            {
+                // Pobieramy pozycjê slota docelowego na podstawie logiki
+                Vector3 targetSlotPos = roadSegment.GetWorldPositionOfSlot(currentSlotIndex);
+
+                // Wyrównujemy wysokoœæ (Y) do czujnika, ¿eby promieñ nie wbija³ siê w asfalt
+                targetSlotPos.y = sensorStart.y;
+
+                // Zabezpieczenie przed b³êdem, gdy auto jest dok³adnie w punkcie docelowym
+                if (Vector3.Distance(sensorStart, targetSlotPos) > 0.1f)
+                {
+                    rayDirection = (targetSlotPos - sensorStart).normalized;
+                }
+            }
+
             RaycastHit hit;
 
             // Debug rysuje promieñ, ¿ebyœ widzia³ co auto "widzi"
-            Debug.DrawRay(sensorStart, transform.forward * detectionRange, Color.blue);
+            Debug.DrawRay(sensorStart, rayDirection * detectionRange, Color.blue);
 
-            if (Physics.Raycast(sensorStart, transform.forward, out hit, detectionRange, carLayer))
+            if (Physics.Raycast(sensorStart, rayDirection, out hit, detectionRange, carLayer))
             {
                 // Trafiliœmy w coœ na warstwie "Car". SprawdŸmy co to jest.
-                // U¿ywamy GetComponentInParent, bo collider mo¿e byæ na dziecku (np. karoserii), a skrypt na rodzicu.
                 CarAgent otherCar = hit.collider.GetComponentInParent<CarAgent>();
 
                 if (otherCar != null)
@@ -174,21 +193,17 @@ public class CarAgent : MonoBehaviour
                         {
                             // Awaryjne hamowanie
                             desiredSpeed = 0f;
-                            Debug.DrawRay(sensorStart, transform.forward * distanceToCar, Color.red);
+                            Debug.DrawRay(sensorStart, rayDirection * distanceToCar, Color.red);
                         }
                         else
                         {
                             // Dostosowanie prêdkoœci
                             float factor = (distanceToCar - safeDistance) / (detectionRange - safeDistance);
                             desiredSpeed = Mathf.Lerp(0f, maxSpeed, factor);
-                            Debug.DrawRay(sensorStart, transform.forward * distanceToCar, Color.yellow);
+                            Debug.DrawRay(sensorStart, rayDirection * distanceToCar, Color.yellow);
                         }
                     }
-                    else
-                    {
-                        // NIE - To auto na innej drodze (np. prostopad³ej), ignorujemy je.
-                        // Dziêki temu nie zablokujemy siê na skrzy¿owaniu.
-                    }
+                    // Jeœli nie - auto jest na innej drodze, ignorujemy
                 }
             }
         }
@@ -222,11 +237,96 @@ public class CarAgent : MonoBehaviour
     private void OnDestroy()
     {
         float lifeTime = Time.time - spawnTime;
-        if (StatsManager.Instance != null) StatsManager.Instance.RegisterCarFinish(lifeTime);
+
+        if (StatsManager.Instance != null && isLogicallyFinished)
+        {
+            StatsManager.Instance.RegisterCarFinish(lifeTime);
+        }
+
+        if (isLogicallyFinished)
+        {
+            Debug.Log($"[Traffic] Samochód {name} dojecha³ do celu! Czas: {lifeTime:F2}s, ³¹czny aktualny czas przejazdów: {StatsManager.Instance.totalTravelTime}s");
+        }
+        else
+        {
+            Debug.Log($"[Traffic] Samochód {name} zniszczony przed celem (czas: {lifeTime:F2}s)");
+            StatsManager.Instance.RegisterCarWronglyDestroyed();
+        }
     }
 
     public void MarkAsFinished()
     {
         isLogicallyFinished = true;
+    }
+
+    // Narzêdzie do debugowania stanu pojazdu
+    // Narzêdzie do debugowania stanu pojazdu
+    void OnGUI()
+    {
+#if UNITY_EDITOR
+        // Rysuj UI tylko jeœli ten konkretny samochód jest zaznaczony w Hierarchy/Scene
+        if (UnityEditor.Selection.activeGameObject == this.gameObject)
+        {
+            Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 2f);
+
+            if (screenPos.z > 0)
+            {
+                GUI.color = Color.black;
+                GUIStyle style = new GUIStyle(GUI.skin.label);
+                style.normal.textColor = Color.white;
+                style.fontSize = 14;
+                style.fontStyle = FontStyle.Bold;
+
+                // --- NOWE: Budowanie stringa z trasy (Queue) ---
+                string routeString = "";
+                if (route != null && route.Count > 0)
+                {
+                    foreach (var r in route)
+                    {
+                        // Dodajemy nazwê drogi do ³añcucha
+                        routeString += (r != null ? r.name.Replace("Road_P", "R") : "null") + " -> ";
+                    }
+                    // Odcinamy ostatnie " -> " dla estetyki
+                    routeString = routeString.TrimEnd(' ', '-', '>');
+                }
+                else
+                {
+                    routeString = "EMPTY / REACHED TARGET";
+                }
+                string waypointsString = "";
+                if (waypoints != null && waypoints.Count > 0)
+                {
+                    foreach (var w in waypoints)
+                    {
+                        // Dodajemy nazwê drogi do ³añcucha
+                        waypointsString += (w != null ? w.ToString() : "null") + " -> ";
+                    }
+                    // Odcinamy ostatnie " -> " dla estetyki
+                    waypointsString = waypointsString.TrimEnd(' ', '-', '>');
+                }
+                else
+                {
+                    waypointsString = "NO WAYPOINTS";
+                }
+                // ------------------------------------------------
+
+                string debugText = $"--- CAR DEBUG ---\n" +
+                                   $"Speed: {currentSpeed:F2} / desired: {(currentTarget.HasValue ? maxSpeed : 0f):F2}\n" +
+                                   $"Waypoints Count: {waypoints.Count}\n" +
+                                   $"Road Segment: {(roadSegment != null ? roadSegment.name : "NULL")}\n" +
+                                   $"Logical Slot Index: {currentSlotIndex}\n" +
+                                   $"Is Finished?: {isLogicallyFinished}\n" +
+                                   $"Route count: {route.Count}\n" + 
+                                   $"Route: {routeString}\n" +
+                                   $"Waypoints Queue: {waypointsString}\n" +
+                                   $"Current target: {(currentTarget != null ? currentTarget : "NULL")}"
+                                   ;
+
+                // Powiêkszy³em nieco wysokoœæ (ostatni parametr Rect z 150 na 200), 
+                // ¿eby d³ugi tekst trasy siê zmieœci³
+                GUI.Label(new Rect(screenPos.x - 75, Screen.height - screenPos.y, 400, 200), debugText, style);
+            }
+        }
+#endif
     }
 }

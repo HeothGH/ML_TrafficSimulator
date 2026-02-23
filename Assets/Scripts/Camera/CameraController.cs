@@ -131,7 +131,7 @@ public class CameraController : MonoBehaviour
                 currentSpeed *= sprintMultiplier;
             }
 
-            Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y).normalized;
+            Vector3 moveDir = new Vector3(moveInput.x * (transform.position.y * 0.01f), 0, moveInput.y * (transform.position.y * 0.01f)).normalized;
 
             transform.position += moveDir * currentSpeed * Time.deltaTime;
         }
@@ -185,13 +185,13 @@ public class CameraController : MonoBehaviour
 
         // Rysowanie okrêgu (punkty lokalne)
         float angleStep = 360f / segments;
-        for (int i = 0; i < segments + 1; i++)
+        for (int i = 0; i < segments; i++)
         {
             float angle = i * angleStep * Mathf.Deg2Rad;
             float x = Mathf.Cos(angle) * ringRadius;
             float z = Mathf.Sin(angle) * ringRadius;
 
-            ringLineRenderer.SetPosition(i, new Vector3(x, 0.2f, z)); // 0.2f w górê, ¿eby nie przenika³ z drog¹
+            ringLineRenderer.SetPosition(i, new Vector3(x, 0.2f, z));
         }
 
         // Domyœlnie ukryty

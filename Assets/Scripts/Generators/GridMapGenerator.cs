@@ -417,6 +417,8 @@ public class GridMapGenerator : MonoBehaviour
             incomingRoadsToNode[node] = new List<RoadSegment>();
         }
 
+        float maxValidDistance = (roadLength * 0.5f) + (intersectionSize * 0.5f) + 2.0f;
+
         foreach (var seg in AllRoadSegments)
         {
             Intersection bestDest = null;
@@ -435,11 +437,21 @@ public class GridMapGenerator : MonoBehaviour
 
                 if (angle < 45f)
                 {
-                    if (dist < minDestDist) { minDestDist = dist; bestDest = node; }
+                    // NOWOŒÆ: Sprawdzamy czy dystans nie przekracza fizycznej d³ugoœci kafelka
+                    if (dist < minDestDist && dist <= maxValidDistance)
+                    {
+                        minDestDist = dist;
+                        bestDest = node;
+                    }
                 }
                 else if (angle > 135f)
                 {
-                    if (dist < minSourceDist) { minSourceDist = dist; bestSource = node; }
+                    // NOWOŒÆ: Sprawdzamy czy dystans nie przekracza fizycznej d³ugoœci kafelka
+                    if (dist < minSourceDist && dist <= maxValidDistance)
+                    {
+                        minSourceDist = dist;
+                        bestSource = node;
+                    }
                 }
             }
 

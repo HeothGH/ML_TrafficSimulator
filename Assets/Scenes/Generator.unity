@@ -244,8 +244,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   generationMode: 1
-  width: 10
-  height: 10
+  width: 5
+  height: 5
   seed: 1
   roadLength: 50
   intersectionSize: 15

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Scene
   m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.SceneTemplate.SceneTemplateAsset
   templateScene: {fileID: 102900000, guid: acf9b3225a8891a45a6cbb2334469cef, type: 3}
-  templateName: 
+  templateName: Scene Sample to begin simulation
   description: 
   preview: {fileID: 0}
   dependencies:

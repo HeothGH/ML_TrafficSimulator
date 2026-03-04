@@ -9,22 +9,19 @@ public class SimulationManager : MonoBehaviour
     [Tooltip("Co ile klatek fizycznych ma siê wykonywaæ logika symulacji? Np. 5 oznacza co 0.1s (przy fixedTime 0.02)")]
     public int logicFrameInterval = 5;
     public int simulationSeed = 12345;
+    // public float timeScale = 1f;
 
     [Header("References")]
     public GameObject carPrefab;
     public List<RoadSegment> allRoads = new List<RoadSegment>();
     public GridMapGenerator mapGenerator;
 
-    // Licznik klatek fizycznych
     private int fixedFrameCount = 0;
 
-    // Obliczona sta³a delta czasu dla logiki
     private float logicDeltaTime;
 
     void Awake()
     {
-        // 1. Obliczamy sztywny czas trwania jednego kroku logicznego
-        // Jeœli FixedUpdate jest co 0.02s, a interwa³ to 5, to logicDeltaTime = 0.1s
         logicDeltaTime = logicFrameInterval * Time.fixedDeltaTime;
 
         Debug.Log($"[SimManager] Logika dzia³a co {logicDeltaTime.ToString("F1")}s ({logicFrameInterval} klatek fizyki).");
@@ -38,43 +35,92 @@ public class SimulationManager : MonoBehaviour
             {
                 allRoads.AddRange(mapGenerator.AllRoadSegments);
             }
+            CenterCameraOnMap();
         }
+
+        foreach (var road in allRoads)
+        {
+            road.InitializeCamera();
+        }
+
+        // Time.timeScale = Mathf.Max(0.1f, this.timeScale);
     }
 
     void FixedUpdate()
     {
         fixedFrameCount++;
 
-        // Wykonaj logikê tylko w co N-tej klatce fizyki
         if (fixedFrameCount % logicFrameInterval == 0)
         {
-            // Przekazujemy STA£¥ wartoœæ czasu.
-            // Dziêki temu Twoje obliczenia kar w StatsManager s¹ idealnie stabilne.
             Step(logicDeltaTime);
         }
+        CheckEpisodeEnd();
     }
 
     void Update()
     {
         if (Keyboard.current.rKey.wasPressedThisFrame)
-        {
+        {   
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 
-    // Metoda Step mo¿e byæ wywo³ywana rêcznie przez Agenta ML (Academy)
     public void Step(float deltaTime)
     {
-        // 1. Fizyka i logika aut
         foreach (var road in allRoads)
         {
             road.Tick();
         }
 
-        // 2. Obliczenie kar (Rewards)
         if (StatsManager.Instance != null)
         {
             StatsManager.Instance.CalculateStepPenalty(allRoads, deltaTime);
         }
+    }
+    private void CheckEpisodeEnd()
+    {
+        TrafficSpawner spawner = FindFirstObjectByType<TrafficSpawner>();
+
+        if (spawner != null && StatsManager.Instance != null)
+        {
+            int totalExpected = spawner.totalCarsInScenario;
+            int handledCars = StatsManager.Instance.carsFinished + StatsManager.Instance.carsDestroyedBeforeFinish;
+
+            if (totalExpected > 0 && handledCars >= totalExpected)
+            {
+                Debug.Log($"[ML-Agents] Epizod zakoñczony! Zakoñczono aut: {handledCars}/{totalExpected}");
+
+                IntersectionAgent[] agents = FindObjectsByType<IntersectionAgent>(FindObjectsSortMode.None);
+                foreach (var agent in agents)
+                {
+                    agent.EndEpisode();
+                }
+
+                StatsManager.Instance.ResetMetrics();
+
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
+        }
+    }
+
+    private void CenterCameraOnMap()
+    {
+        if (Camera.main == null || mapGenerator == null || mapGenerator.AllIntersections.Count == 0)
+            return;
+
+        Vector3 centerPosition = Vector3.zero;
+
+        foreach (var intersection in mapGenerator.AllIntersections)
+        {
+            centerPosition += intersection.transform.position;
+        }
+
+        centerPosition /= mapGenerator.AllIntersections.Count;
+
+        Camera.main.transform.position = new Vector3(centerPosition.x, 250f, centerPosition.z);
+
+        Camera.main.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+        Debug.Log($"[SimManager] Kamera wyœrodkowana na pozycji: {Camera.main.transform.position}");
     }
 }

@@ -3,37 +3,36 @@ using UnityEngine;
 
 public class CarAgent : MonoBehaviour
 {
-    // Logika
-    public RoadSegment currentRoad; 
+    [Header("Logic")]
+    public RoadSegment currentRoad;
     public RoadSegment roadSegment;
     public int currentSlotIndex;
     public Queue<RoadSegment> route = new Queue<RoadSegment>();
     private bool isLogicallyFinished = false;
 
-    // Fizyka i Kolejka Celów
     private Queue<Vector3> waypoints = new Queue<Vector3>();
     private Vector3? currentTarget = null;
 
     [Header("Car Physics")]
-    [Tooltip("Maksymalna prêdkoœæ (m/s)")]
-    public float maxSpeed = 20f;      // 
-    [Tooltip("Jak szybko rusza (m/s^2)")]
-    public float acceleration = 5f;  // 
-    [Tooltip("Jak szybko hamuje (m/s^2)")]
-    public float deceleration = 10f;  // 
-    [Tooltip("Prêdkoœæ skrêtu")]
-    public float turnSpeed = 5f;      // 
-    [Tooltip("Odleg³oœæ od punktu w celu zakolejkowania kolejnego.")]
-    public float arrivalDistance = 1.0f;
+    public float maxSpeed = 20f;
+    public float acceleration = 5f;
+    public float deceleration = 10f;
+    public float turnSpeed = 5f;
+    public float arrivalDistance = 2.0f;
 
     [Header("Personality")]
-    [Tooltip("Warstwa, na której s¹ samochody")]
     public LayerMask carLayer;
     [Range(-1f, 1f)]
     public float aggressionBias = 0f;
-    // Implementacja aktywnego tempomatu
+
     private float detectionRange = 10f;
     private float safeDistance = 2.0f;
+
+    [Header("Watchdog (Anti-Deadlock)")]
+    [Tooltip("Ile sekund auto musi staæ w miejscu, ¿eby odpaliæ Tryb Ducha")]
+    public float stuckThreshold = 8.0f;
+    private float stuckTimer = 0f;
+    private float ghostTimer = 0f;
 
     private float baseMaxSpeed;
     private float baseAcceleration;
@@ -41,17 +40,16 @@ public class CarAgent : MonoBehaviour
     private Renderer carRenderer;
 
     private float currentSpeed = 0f;
+    public float CurrentSpeed => currentSpeed;
     private float spawnTime;
 
     public int PendingWaypointsCount => waypoints.Count;
+
     void Awake()
     {
-        // Zapamiêtujemy wartoœci ustawione w Inspectorze jako bazowe
         baseMaxSpeed = maxSpeed;
         baseAcceleration = acceleration;
         baseDeceleration = deceleration;
-
-        // Szukamy renderera do zmiany koloru (mo¿e byæ na tym obiekcie lub w dziecku)
         carRenderer = GetComponentInChildren<Renderer>();
     }
 
@@ -60,7 +58,6 @@ public class CarAgent : MonoBehaviour
         route = new Queue<RoadSegment>(path);
         spawnTime = Time.time;
 
-        // Aplikujemy osobowoœæ
         aggressionBias = bias;
         ApplyAggressionProfile();
 
@@ -80,22 +77,17 @@ public class CarAgent : MonoBehaviour
         acceleration = baseAcceleration * (1.0f + (aggressionBias * 0.4f));
         deceleration = baseDeceleration * (1.0f + (aggressionBias * 0.3f));
 
-        safeDistance = 1.5f - (aggressionBias * 0.75f);
-        detectionRange = safeDistance * 5.0f;
+        safeDistance = 2.0f - (aggressionBias * 0.5f);
+
+        float stoppingDistance = (maxSpeed * maxSpeed) / (2f * deceleration);
+        detectionRange = stoppingDistance + safeDistance + 2.0f;
 
         if (carRenderer != null)
         {
             if (aggressionBias < 0)
-            {
-                // Od Zielonego (-1) do ¯ó³tego (0)
-                // bias + 1 daje zakres 0..1 dla tej po³ówki
                 carRenderer.material.color = Color.Lerp(Color.green, Color.yellow, aggressionBias + 1f);
-            }
             else
-            {
-                // Od ¯ó³tego (0) do Czerwonego (1)
                 carRenderer.material.color = Color.Lerp(Color.yellow, Color.red, aggressionBias);
-            }
         }
     }
 
@@ -117,7 +109,7 @@ public class CarAgent : MonoBehaviour
         foreach (var p in points) waypoints.Enqueue(p);
     }
 
-    void Update()
+    void FixedUpdate()
     {
         HandleMovement();
         if (waypoints.Count == 0 && isLogicallyFinished)
@@ -128,7 +120,6 @@ public class CarAgent : MonoBehaviour
 
     void HandleMovement()
     {
-        // 1. Pobieranie celu
         if (currentTarget == null && waypoints.Count > 0)
         {
             currentTarget = waypoints.Dequeue();
@@ -136,92 +127,114 @@ public class CarAgent : MonoBehaviour
 
         if (currentTarget.HasValue)
         {
+            float dynamicArrival = Mathf.Max(arrivalDistance, currentSpeed * Time.fixedDeltaTime * 1.5f);
             float distToTarget = Vector3.Distance(transform.position, currentTarget.Value);
-            if (distToTarget < arrivalDistance)
+
+            if (distToTarget < dynamicArrival)
             {
                 if (waypoints.Count > 0) currentTarget = waypoints.Dequeue();
                 else currentTarget = null;
             }
         }
 
-        // 2. Wstêpna decyzja o prêdkoœci
         bool hasTarget = currentTarget.HasValue;
         float desiredSpeed = hasTarget ? maxSpeed : 0f;
 
         if (hasTarget)
         {
-            Vector3 sensorStart = transform.position + transform.forward * 1.0f + Vector3.up * 0.5f;
-
-            // --- NOWA LOGIKA: Celowanie Raycastem w logiczny slot ---
-            Vector3 rayDirection = transform.forward; // Wartoœæ domyœlna
-
-            // Upewniamy siê, ¿e mamy przypisan¹ drogê
-            if (roadSegment != null)
-            {
-                // Pobieramy pozycjê slota docelowego na podstawie logiki
-                Vector3 targetSlotPos = roadSegment.GetWorldPositionOfSlot(currentSlotIndex);
-
-                // Wyrównujemy wysokoœæ (Y) do czujnika, ¿eby promieñ nie wbija³ siê w asfalt
-                targetSlotPos.y = sensorStart.y;
-
-                // Zabezpieczenie przed b³êdem, gdy auto jest dok³adnie w punkcie docelowym
-                if (Vector3.Distance(sensorStart, targetSlotPos) > 0.1f)
-                {
-                    rayDirection = (targetSlotPos - sensorStart).normalized;
-                }
-            }
+            Vector3 sensorStart = transform.position + Vector3.up * 0.5f + transform.forward * 1.5f;
 
             RaycastHit hit;
 
-            // Debug rysuje promieñ, ¿ebyœ widzia³ co auto "widzi"
-            Debug.DrawRay(sensorStart, rayDirection * detectionRange, Color.blue);
-
-            if (Physics.Raycast(sensorStart, rayDirection, out hit, detectionRange, carLayer))
+            if (Physics.Raycast(sensorStart, transform.forward, out hit, detectionRange, carLayer))
             {
-                // Trafiliœmy w coœ na warstwie "Car". SprawdŸmy co to jest.
                 CarAgent otherCar = hit.collider.GetComponentInParent<CarAgent>();
 
-                if (otherCar != null)
+                if (otherCar != null && otherCar != this)
                 {
-                    // --- FILTR: Czy to auto jest na tej samej drodze? ---
-                    if (otherCar.roadSegment == this.roadSegment)
-                    {
-                        // TAK - Reagujemy (hamujemy)
-                        float distanceToCar = hit.distance;
+                    Vector3 toOther = otherCar.transform.position - transform.position;
+                    float dist = toOther.magnitude;
 
-                        if (distanceToCar < safeDistance)
+                    // Zabezpieczenie na skrajne na³o¿enie siê obiektów
+                    if (dist > 0.1f)
+                    {
+                        Vector3 dirToOther = toOther.normalized;
+
+                        if (Vector3.Dot(transform.forward, dirToOther) > 0.3f)
                         {
-                            // Awaryjne hamowanie
-                            desiredSpeed = 0f;
-                            Debug.DrawRay(sensorStart, rayDirection * distanceToCar, Color.red);
+                            float angle = Vector3.Angle(transform.forward, otherCar.transform.forward);
+                            if (angle < 135f)
+                            {
+                                float actualDistance = hit.distance + 1.5f;
+
+                                if (actualDistance <= safeDistance)
+                                {
+                                    desiredSpeed = 0f;
+                                }
+                                else
+                                {
+                                    float maxSafeSpeed = Mathf.Sqrt(2f * deceleration * (actualDistance - safeDistance));
+                                    desiredSpeed = Mathf.Min(maxSpeed, maxSafeSpeed);
+                                }
+
+                                Debug.DrawRay(sensorStart, transform.forward * hit.distance, Color.red);
+                            }
+                            else
+                            {
+                                Debug.DrawRay(sensorStart, transform.forward * detectionRange, Color.green);
+                            }
                         }
                         else
                         {
-                            // Dostosowanie prêdkoœci
-                            float factor = (distanceToCar - safeDistance) / (detectionRange - safeDistance);
-                            desiredSpeed = Mathf.Lerp(0f, maxSpeed, factor);
-                            Debug.DrawRay(sensorStart, rayDirection * distanceToCar, Color.yellow);
+                            Debug.DrawRay(sensorStart, transform.forward * detectionRange, Color.green);
                         }
                     }
-                    // Jeœli nie - auto jest na innej drodze, ignorujemy
                 }
+            }
+            else
+            {
+                Debug.DrawRay(sensorStart, transform.forward * detectionRange, Color.green);
             }
         }
 
-        // 3. Fizyka (Smooth)
-        float speedChange = (desiredSpeed > currentSpeed ? acceleration : deceleration) * Time.deltaTime;
+        if (currentSpeed < 0.5f && hasTarget)
+        {
+            stuckTimer += Time.fixedDeltaTime;
+            if (stuckTimer > stuckThreshold)
+            {
+                ghostTimer = 5.0f;
+                stuckTimer = 0f;
+            }
+        }
+        else
+        {
+            stuckTimer = 0f; // Resetujemy timer, gdy auto jedzie
+        }
+
+        
+        if (ghostTimer > 0f)
+        {
+            ghostTimer -= Time.fixedDeltaTime;
+            desiredSpeed = maxSpeed;
+        }
+        else if (ghostTimer <= 0f && ghostTimer > -1f)
+        {
+            ApplyAggressionProfile();
+            ghostTimer = -2f;
+        }
+
+        float speedChange = (desiredSpeed > currentSpeed ? acceleration : deceleration) * Time.fixedDeltaTime;
         currentSpeed = Mathf.MoveTowards(currentSpeed, desiredSpeed, speedChange);
 
-        // 4. Ruch
         if (currentSpeed > 0.1f && currentTarget.HasValue)
         {
             Vector3 direction = (currentTarget.Value - transform.position).normalized;
-            transform.position += direction * currentSpeed * Time.deltaTime;
+            transform.position += direction * currentSpeed * Time.fixedDeltaTime;
 
             if (direction != Vector3.zero)
             {
                 Quaternion lookRot = Quaternion.LookRotation(direction);
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.deltaTime * turnSpeed);
+                transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.fixedDeltaTime * turnSpeed);
             }
         }
     }
@@ -259,12 +272,9 @@ public class CarAgent : MonoBehaviour
         isLogicallyFinished = true;
     }
 
-    // Narzêdzie do debugowania stanu pojazdu
-    // Narzêdzie do debugowania stanu pojazdu
     void OnGUI()
     {
 #if UNITY_EDITOR
-        // Rysuj UI tylko jeœli ten konkretny samochód jest zaznaczony w Hierarchy/Scene
         if (UnityEditor.Selection.activeGameObject == this.gameObject)
         {
             Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 2f);
@@ -277,16 +287,13 @@ public class CarAgent : MonoBehaviour
                 style.fontSize = 14;
                 style.fontStyle = FontStyle.Bold;
 
-                // --- NOWE: Budowanie stringa z trasy (Queue) ---
                 string routeString = "";
                 if (route != null && route.Count > 0)
                 {
                     foreach (var r in route)
                     {
-                        // Dodajemy nazwê drogi do ³añcucha
                         routeString += (r != null ? r.name.Replace("Road_P", "R") : "null") + " -> ";
                     }
-                    // Odcinamy ostatnie " -> " dla estetyki
                     routeString = routeString.TrimEnd(' ', '-', '>');
                 }
                 else
@@ -298,17 +305,14 @@ public class CarAgent : MonoBehaviour
                 {
                     foreach (var w in waypoints)
                     {
-                        // Dodajemy nazwê drogi do ³añcucha
                         waypointsString += (w != null ? w.ToString() : "null") + " -> ";
                     }
-                    // Odcinamy ostatnie " -> " dla estetyki
                     waypointsString = waypointsString.TrimEnd(' ', '-', '>');
                 }
                 else
                 {
                     waypointsString = "NO WAYPOINTS";
                 }
-                // ------------------------------------------------
 
                 string debugText = $"--- CAR DEBUG ---\n" +
                                    $"Speed: {currentSpeed:F2} / desired: {(currentTarget.HasValue ? maxSpeed : 0f):F2}\n" +
@@ -316,14 +320,11 @@ public class CarAgent : MonoBehaviour
                                    $"Road Segment: {(roadSegment != null ? roadSegment.name : "NULL")}\n" +
                                    $"Logical Slot Index: {currentSlotIndex}\n" +
                                    $"Is Finished?: {isLogicallyFinished}\n" +
-                                   $"Route count: {route.Count}\n" + 
+                                   $"Route count: {route.Count}\n" +
                                    $"Route: {routeString}\n" +
                                    $"Waypoints Queue: {waypointsString}\n" +
-                                   $"Current target: {(currentTarget != null ? currentTarget : "NULL")}"
-                                   ;
+                                   $"Current target: {(currentTarget != null ? currentTarget : "NULL")}";
 
-                // Powiêkszy³em nieco wysokoœæ (ostatni parametr Rect z 150 na 200), 
-                // ¿eby d³ugi tekst trasy siê zmieœci³
                 GUI.Label(new Rect(screenPos.x - 75, Screen.height - screenPos.y, 400, 200), debugText, style);
             }
         }

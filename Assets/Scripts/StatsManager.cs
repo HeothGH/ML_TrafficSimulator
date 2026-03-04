@@ -17,6 +17,11 @@ public class StatsManager : MonoBehaviour
     [Tooltip("Suma kar od pocz¹tku epizodu")]
     public float accumulatedEpisodePenalty = 0f;
 
+    [Tooltip("Suma pozytywnych nagród w obecnym kroku")]
+    public float currentStepReward = 0f;
+    [Tooltip("Ile punktów nagrody agent dostaje za ka¿de auto, które dojecha³o")]
+    public float rewardPerFinishedCar = 10f;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -43,9 +48,15 @@ public class StatsManager : MonoBehaviour
         currentCarsOnMap--;
         carsFinished++;
         totalTravelTime += travelTime;
+
+        IntersectionAgent[] agents = FindObjectsByType<IntersectionAgent>(FindObjectsSortMode.None);
+        foreach (var agent in agents)
+        {
+            agent.AddReward(rewardPerFinishedCar);
+        }
     }
 
-    // Wywo³ywane przez SimulationManager w ka¿dym Step()
+
     public void CalculateStepPenalty(List<RoadSegment> allRoads, float dt)
     {
         float stepSum = 0f;
@@ -57,7 +68,6 @@ public class StatsManager : MonoBehaviour
         currentStepPenalty = stepSum;
         accumulatedEpisodePenalty += stepSum;
 
-        // W logach ML-Agents tutaj wyœlesz AddReward(-currentStepPenalty);
     }
 
     public void ResetMetrics()
@@ -66,6 +76,8 @@ public class StatsManager : MonoBehaviour
         carsFinished = 0;
         currentCarsOnMap = 0;
         currentStepPenalty = 0f;
-        accumulatedEpisodePenalty = 0f;
+        accumulatedEpisodePenalty = 0f; 
+        currentStepReward = 0f;
     }
+
 }

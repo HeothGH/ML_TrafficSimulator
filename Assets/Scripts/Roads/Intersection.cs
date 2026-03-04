@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Linq; // Potrzebne do sortowania
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -40,21 +40,15 @@ public class Intersection : MonoBehaviour
 
         if (incomingRoads.Count == 0) return;
 
-        // Sortujemy drogi malej¹co po priorytecie (2 -> 1 -> 0)
-        // Jeœli priorytety s¹ równe, decyduje nazwa/ID (dla determinizmu)
         var sortedRoads = incomingRoads
             .OrderByDescending(r => r.priority)
             .ThenBy(r => r.name)
             .ToList();
 
-        // LOGIKA GRUPOWANIA:
-        // Faza 0: Dwie najwa¿niejsze drogi (nawet jeœli to zakrêt L)
-        // Faza 1: Wszystkie pozosta³e drogi
 
         TrafficPhase phaseMain = new TrafficPhase { phaseName = "Priority_Main" };
         TrafficPhase phaseSub = new TrafficPhase { phaseName = "Priority_Sub" };
 
-        // Bierzemy max 2 pierwsze drogi do g³ównej fazy
         int mainCount = Mathf.Min(2, sortedRoads.Count);
 
         for (int i = 0; i < mainCount; i++)
@@ -62,7 +56,6 @@ public class Intersection : MonoBehaviour
             phaseMain.greenRoads.Add(sortedRoads[i]);
         }
 
-        // Reszta do podrzêdnej
         for (int i = mainCount; i < sortedRoads.Count; i++)
         {
             phaseSub.greenRoads.Add(sortedRoads[i]);
@@ -70,7 +63,6 @@ public class Intersection : MonoBehaviour
 
         phases.Add(phaseMain);
 
-        // Dodajemy drug¹ fazê tylko jeœli s¹ jakieœ drogi podrzêdne
         if (phaseSub.greenRoads.Count > 0)
         {
             phases.Add(phaseSub);
@@ -101,7 +93,6 @@ public class Intersection : MonoBehaviour
         List<Vector3> path = new List<Vector3>();
         path.Add(startPos);
 
-        // Obliczamy ró¿nicê pozycji
         Vector3 diff = endPos - startPos;
 
         bool isStraight = Mathf.Abs(diff.x) > Mathf.Abs(diff.z) * 2.0f ||

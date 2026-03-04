@@ -130,12 +130,12 @@ GameObject:
   - component: {fileID: 8928172}
   - component: {fileID: 8928171}
   m_Layer: 0
-  m_Name: _TrafficDebugAgent
+  m_Name: _DebugTrafficAgent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &8928171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -196,7 +196,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logicFrameInterval: 5
   simulationSeed: 127
-  carPrefab: {fileID: 2331321266964353592, guid: dd9bed2187fd0d8438328add6787d8fd, type: 3}
+  carPrefab: {fileID: 8342769285468712396, guid: fc509f48c1c0a904688e703b7bae6c99, type: 3}
   allRoads: []
   mapGenerator: {fileID: 304471552}
 --- !u!4 &241227568
@@ -637,9 +637,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrafficSpawner
   simulationManager: {fileID: 241227567}
-  carPrefab: {fileID: 3012605332188686070, guid: dd9bed2187fd0d8438328add6787d8fd, type: 3}
+  carPrefab: {fileID: 1938029246012666710, guid: 5ec1f6b2e12faa64a9c44ecae26dff7a, type: 3}
   seed: 42
-  totalCarsInScenario: 30
+  totalCarsInScenario: 150
 --- !u!4 &1406930175
 Transform:
   m_ObjectHideFlags: 0
@@ -690,6 +690,8 @@ MonoBehaviour:
   carsDestroyedBeforeFinish: 0
   currentStepPenalty: 0
   accumulatedEpisodePenalty: 0
+  currentStepReward: 0
+  rewardPerFinishedCar: 10
 --- !u!4 &1922230901
 Transform:
   m_ObjectHideFlags: 0

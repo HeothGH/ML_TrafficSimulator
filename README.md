@@ -64,6 +64,6 @@ Ensure the URL in your request-sending script (attached to your camera or manage
 
 Hit the "Play" button. Unity will start sending frames to the server. Check your Python console to see real-time logs for vehicle counts and saved training images.
 
-## 📝 License
+## License
 This project is licensed under a Custom Non-Commercial License. 
 You are free to download, study, and modify the code for personal and educational purposes, but **commercial use and selling are strictly prohibited**. See the `LICENSE` file for more details.

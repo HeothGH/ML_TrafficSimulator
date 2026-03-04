@@ -4,6 +4,8 @@ ML_TrafficSimulator is a deterministic (seed based) traffic simulation project b
 
 Because of the specific, simplified vehicle graphics (low-poly/boxy cars), standard AI models struggle to identify them correctly out of the box. To solve this, the project includes a built-in pipeline to automatically collect data and fine-tune a custom object detection model.
 
+ ![GithubVID](https://github.com/user-attachments/assets/a398b798-81ef-40af-90ae-ca4b2f9b041a)
+
 ## Key Features
 
 * **Real-time Simulation:** A Unity 3D environment generating moving traffic with logical routing (A* pathfinding) and procedural grid map generation.

@@ -63,3 +63,7 @@ Open the project in the Unity Editor. The template scene is already made up.
 Ensure the URL in your request-sending script (attached to your camera or manager) is set to http://127.0.0.1:8000/count_cars.
 
 Hit the "Play" button. Unity will start sending frames to the server. Check your Python console to see real-time logs for vehicle counts and saved training images.
+
+## 📝 License
+This project is licensed under a Custom Non-Commercial License. 
+You are free to download, study, and modify the code for personal and educational purposes, but **commercial use and selling are strictly prohibited**. See the `LICENSE` file for more details.
